@@ -1,15 +1,23 @@
+//these are libraries. 
+//if <> the compiler will search the system directory
+//if "" the compiler will search the local directory first and then the system directory. (so these are selfmade files in the program)
 #include<stdio.h>
 #include <stdlib.h>
 #include<string.h>	//strlen
 #include<sys/socket.h>
 #include<arpa/inet.h>	//inet_addr
 #include<unistd.h>	//write
-
+#include<wiringPi.h> //this is the library for accessing the GPIO pins on the pi and turning them on/off
+#define LED 18
 int blink_count = 0;
 void blink()
 {
-    blink_count++;
-    //todo more
+	wiringPiSetupGpio();
+	pinMode(LED, OUTPUT);
+	digitalWrite(LED,1);
+	delay(3000);
+	digitalWrite(LED,0);
+	blink_count++;
 }
 
 int main(int argc , char *argv[])
@@ -56,18 +64,20 @@ int main(int argc , char *argv[])
 	}
 	puts("Connection accepted");
 	
+	memset(client_message, 0, sizeof(client_message));
 	//Receive a message from client
 	while( (read_size = recv(client_sock , client_message , 2000 , 0)) > 0 )
 	{
 		char response_message_1[] = "LED blinked";
 		char response_message_2[] = "Log: todo";
 		char response_message_3[] = "Goodbuy, i am closing our connection";
-		char response_message_4[] = "Goodbuy, i am closing our connection and shitting myself down";
+		char response_message_4[] = "Goodbuy, i am closing our connection and shutting myself down";
 		char response_message_error[] = "Internal server error";
 		printf("message received: %s\n", client_message);
 		if (strcmp(client_message,"1")==0)
 		{
 			printf("cmd id 1 detected. Now blinking LED.\n");
+			blink();
 			write(client_sock , response_message_1 , strlen(response_message_1));
 		}
 		else if (strcmp(client_message,"2")==0)
@@ -87,7 +97,7 @@ int main(int argc , char *argv[])
 		}
 		else
 		{
-			printf("client did not enter a command id");
+			printf("client did not enter a command id\n");
 			//Send the message back to client
 			write(client_sock , response_message_error , strlen(response_message_error));
 		}
